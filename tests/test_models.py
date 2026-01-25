@@ -202,6 +202,46 @@ class TestProductModel(unittest.TestCase):
         product = ProductFactory()
         product.id = None
         self.assertRaises(DataValidationError, product.update)
-        
+
     def test_serialize(self):
-        
+        """It should return a dictionary"""
+        product = ProductFactory()
+        result = product.serialize()
+        self.assertEqual(product.id, result["id"])
+        self.assertEqual(product.name, result["name"])
+        self.assertEqual(product.description, result["description"])
+        self.assertEqual(str(product.price), result["price"])
+        self.assertEqual(product.available, result["available"])
+        self.assertEqual(product.category.name, result["category"])
+    def test_deserialize(self):
+        """It should return an object"""
+        product = ProductFactory()
+        result = product.serialize()
+        product.deserialize(result)
+        self.assertEqual(product.id, result["id"])
+        self.assertEqual(product.name, result["name"])
+        self.assertEqual(product.description, result["description"])
+        self.assertEqual(str(product.price), result["price"])
+        self.assertEqual(product.available, result["available"])
+        self.assertEqual(product.category.name, result["category"])
+
+    def test_invalid_availability_on_deserialize(self):
+        """It should return a validation error"""
+        product = ProductFactory()
+        data = product.serialize()
+        data["available"] = "yes"
+        self.assertRaises(DataValidationError, product.deserialize, data)
+
+    def test_invalid_category_on_deserialize(self):
+     """It should raise a DataValidationError for an invalid category string"""
+     product = ProductFactory()
+     data = product.serialize()
+     
+     data["category"] = "ELECEED_INVALID_CATEGORY"
+     self.assertRaises(DataValidationError, product.deserialize, data)
+
+    def test_type_error_on_deserialize(self):
+        """It should raise a DataValidationError when data is not a dictionary"""
+        product = ProductFactory()
+        invalid_data = None
+        self.assertRaises(DataValidationError, product.deserialize, invalid_data)
